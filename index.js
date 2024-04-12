@@ -1,51 +1,42 @@
 const { Telegraf } = require("telegraf");
-const http = require("http");
-const {BOT_TOKEN , CHAT_ID}= require("./config.json")
+const express = require("express");
+
+const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-const bot = new Telegraf(`${BOT_TOKEN}`);
-const server = http.createServer((req, res) => {
-  if (req.method === "POST" && req.url === "/github-webhook") {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
-    });
+app.use(express.json());
 
-    req.on("end", () => {
-      const payload = JSON.parse(body);
-      if (payload && payload.hasOwnProperty("commits")) {
-        const commits = payload.commits;
-        const commitMessages = commits
-          .map((commit) => {
-            return `
-            [${commit.id.substring(0, 5)}](${commit.url}) ${commit.message} - ${
-              commit.author.name
-            }
-            `;
-          })
-          .join("\n");
-        const message = `[[${payload.repository.name}:${payload.repository.master_branch}](${payload.repository.html_url})]New commits:\n${commitMessages}`;
-        sendTelegramMessage(message);
-      }
-      res.end("Received GitHub webhook");
-    });
-  } else {
-    res.statusCode = 202;
-    res.end("Uptime");
+app.post("/github-webhook", (req, res) => {
+  const payload = req.body;
+  if (payload && payload.hasOwnProperty("commits")) {
+    const commits = payload.commits;
+    const commitMessages = commits
+      .map((commit) => {
+        return `
+        [${commit.id.substring(0, 5)}](${commit.url}) ${commit.message} - ${
+          commit.author.name
+        }
+        `;
+      })
+      .join("\n");
+    const message = `[[${payload.repository.name}:${payload.repository.master_branch}](${payload.repository.html_url})]New commits:\n${commitMessages}`;
+    const chatId = req.query.chat_id;
+    const botToken = req.query.token;
+    console.log("chatid", chatId);
+    console.log("token", botToken);
+    sendTelegramMessage(message, chatId, botToken);
   }
+  res.end("Received GitHub webhook");
 });
 
-async function sendTelegramMessage(message) {
-  await bot.telegram.sendMessage(CHAT_ID, `${message}`, {
+async function sendTelegramMessage(message, chatId, botToken) {
+  const bot = new Telegraf(botToken);
+  await bot.telegram.sendMessage(Number(chatId), `${message}`, {
     parse_mode: "Markdown",
   });
 }
 
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});
-
-bot.launch({
-  dropPendingUpdates: true,
 });
