@@ -43,8 +43,8 @@ app.post("/github-webhook", async (req, res) => {
 
 async function sendTelegramMessage(message, chatId, botToken) {
   const bot = new Telegraf(botToken);
-  const escapedMessage = message.replace(/[_*[\]()~`>#+-=|{}.!]/g, "\\$&");
-  await bot.telegram.sendMessage(Number(chatId), `${escapedMessage}`, {
+
+  await bot.telegram.sendMessage(Number(chatId), `${message}`, {
     parse_mode: "Markdown",
   });
 }
