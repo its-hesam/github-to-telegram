@@ -2,6 +2,7 @@ const axios = require("axios");
 const http = require("http");
 const url = require("url");
 require("dotenv").config("./.env");
+const PORT = process.env.PORT || 3000;
 
 const server = http.createServer((req, res) => {
   const queryObject = url.parse(req.url, true).query;
