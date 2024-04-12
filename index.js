@@ -23,7 +23,7 @@ app.post("/github-webhook", async (req, res) => {
         `;
       })
       .join("\n");
-    const message = `[[${payload.repository.name}:${payload.repository.master_branch}](${payload.repository.html_url})]New commits:\n${commitMessages} \nDev:@Hesam_0G`;
+    const message = `[[${payload.repository.name}:${payload.repository.master_branch}](${payload.repository.html_url})]New commits:\n${commitMessages}`;
 
     const chatId = req.query.chat_id;
     const botToken = req.query.token;
