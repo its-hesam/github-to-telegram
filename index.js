@@ -11,30 +11,31 @@ app.post("/github-webhook", async (req, res) => {
   try {
     const payload = req.body;
     if (!payload || !payload.hasOwnProperty("commits")) {
-      throw new Error("Invalid payload");
+      res.status(200).json({ message: `OK!` });
+    } else {
+      const commits = payload.commits;
+      const commitMessages = commits
+        .map((commit) => {
+          return `
+          [${commit.id.substring(0, 5)}](${commit.url}) ${commit.message} - ${
+            commit.author.name
+          }
+          `;
+        })
+        .join("\n");
+      const message = `[[${payload.repository.name}:${payload.repository.master_branch}](${payload.repository.html_url})]New commits:\n${commitMessages}`;
+
+      const chatId = req.query.chat_id;
+      const botToken = req.query.token;
+
+      if (!chatId || !botToken) {
+        throw new Error("Missing chat_id or token");
+      }
+
+      await sendTelegramMessage(message, chatId, botToken);
+
+      res.end("Received GitHub webhook");
     }
-    const commits = payload.commits;
-    const commitMessages = commits
-      .map((commit) => {
-        return `
-        [${commit.id.substring(0, 5)}](${commit.url}) ${commit.message} - ${
-          commit.author.name
-        }
-        `;
-      })
-      .join("\n");
-    const message = `[[${payload.repository.name}:${payload.repository.master_branch}](${payload.repository.html_url})]New commits:\n${commitMessages}`;
-
-    const chatId = req.query.chat_id;
-    const botToken = req.query.token;
-
-    if (!chatId || !botToken) {
-      throw new Error("Missing chat_id or token");
-    }
-
-    await sendTelegramMessage(message, chatId, botToken);
-
-    res.end("Received GitHub webhook");
   } catch (error) {
     console.error("Error:", error.message);
     res.status(400).json({ error: error.message });
