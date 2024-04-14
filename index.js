@@ -11,7 +11,7 @@ app.post("/github-webhook", async (req, res) => {
   try {
     const payload = req.body;
     if (!payload || !payload.hasOwnProperty("commits")) {
-      res.status(200).json({ message: `OK!` });
+      res.status(200).json({ message: `OK!!` });
     } else {
       const commits = payload.commits;
       const commitMessages = commits
